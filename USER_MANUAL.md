@@ -132,4 +132,39 @@ Al energizar la placa:
 
 
 - El LED de *heartbeat* (PA5) comienza a parpadear.  
-- Se envía por UART el mensaje:  
+
+## 6. Diagramas  
+
+### 6.1 Diagrama de Estados 
+ ┌────────────┐        Botón presionado        ┌───────────────┐
+ │   IDLE     │ ───────────────────────────▶  │ LED Encendido │
+ └────────────┘                               └───────────────┘
+       ▲                                              │
+       │    Timeout (3 s)                             │ UART comando PWM
+       │                                              ▼
+       │                                        ┌──────────────┐
+       └──────────────────────────────────────  │ PWM Activo   │
+                                                └──────────────┘
+
+### 6.2 Diagrama de Componentes  
+           ┌────────────────────────────┐
+           │       room_control.c       │
+           │  (Lógica principal)        │
+           └────────────┬───────────────┘
+                        │
+        ┌───────────────┼──────────────────────┐
+        │                │                     │
+┌──────────────┐  ┌──────────────┐     ┌────────────────┐
+│ gpio.c/.h    │  │ tim.c/.h     │     │ uart.c/.h      │
+│ Control GPIO │  │ PWM (TIM3)   │     │ Comunicación    │
+└──────────────┘  └──────────────┘     └────────────────┘
+        │                │                     │
+        │                │                     │
+        └──────────────┬───────────────────────┘
+                       │
+                ┌─────────────┐
+                │ main.c      │
+                │ Inicializa  │
+                │ periféricos │
+                └─────────────┘
+

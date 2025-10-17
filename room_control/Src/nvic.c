@@ -1,6 +1,11 @@
 #include "nvic.h"
+#include "gpio.h"
+#include "room_control.h"
 #include "rcc.h"  // Para rcc_syscfg_clock_enable
 #include "uart.h" // Para USART2
+
+extern volatile uint8_t button_event;
+extern volatile uint32_t system_ms_counter;
 
 static void nvic_enable_irq(uint32_t IRQn)
 {
@@ -14,34 +19,27 @@ void nvic_set_priority(uint32_t IRQn, uint8_t priority)
 
 void nvic_exti_pc13_button_enable(void) // Esta función configura el botón conectado al pin PC13 para que genere una interrupción externa (EXTI) cuando se presiona.
 {
-    // 1. Habilitar el reloj para SYSCFG
-    rcc_syscfg_clock_enable();
+    // reloj SYSCFG
+    RCC->APB2ENR |= (1U << 0);
 
-    // 2. Configurar la línea EXTI13 (SYSCFG_EXTICR)
-    SYSCFG->EXTICR[3] &= ~(0x000FU << 4); // Limpiar campo EXTI13
-    SYSCFG->EXTICR[3] |= (0x0002U << 4);  // Conectar EXTI13 a PC13
+    SYSCFG->EXTICR[3] &= ~(0xFU << 4);
+    SYSCFG->EXTICR[3] |= (0x2U << 4);
 
-    // 3. Configurar la línea EXTI13 para interrupción
     EXTI->IMR1 |= (1U << 13);
-
-    // 4. Configurar el trigger de flanco de bajada
+    // Flanco descendente (botón activo-bajo)
     EXTI->FTSR1 |= (1U << 13);
-    EXTI->RTSR1 &= ~(1U << 13);
+    // Limpia pendiente inicial
+    EXTI->PR1 = (1U << 13);
 
-    // 5. Habilitar la interrupción EXTI15_10 en el NVIC
-    nvic_enable_irq(EXTI15_10_IRQn);
-
-    // 6. Configurar la prioridad
-    nvic_set_priority(EXTI15_10_IRQn, 1);
+    // Habilita IRQ en NVIC
+    NVIC->ISER[1] = (1U << (EXTI15_10_IRQn - 32));
 }
 
 void nvic_usart2_irq_enable(void) // Esta función habilita la interrupción del periférico UART2, para reaccionar automáticamente cuando llega un nuevo carácter por serial.
 {
-    // Habilitar interrupción de recepción en USART2
-    USART2->CR1 |= (1U << 5); // RXNEIE
+    // Habilita RXNEIE (interrupción cuando hay dato)
+    USART2->CR1 |= (1U << 5);
 
-    // Habilitar la interrupción USART2 en el NVIC
-    nvic_set_priority(USART2_IRQn, 3);
-
-    nvic_enable_irq(USART2_IRQn);
+    // Habilita IRQ de USART2 en NVIC
+    NVIC->ISER[1] = (1U << (USART2_IRQn - 32));
 }

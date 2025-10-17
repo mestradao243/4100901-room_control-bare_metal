@@ -10,10 +10,7 @@ void rcc_init(void)
     RCC->AHB2ENR |= (1 << 2); // Habilita reloj GPIOC
 }
 
-void rcc_syscfg_clock_enable(void)
-{
-    RCC->APB2ENR |= (1 << 0); // Habilita reloj SYSCFG
-}
+void rcc_syscfg_clock_enable();
 
 void rcc_tim3_clock_enable(void) // Función para habilitar reloj de TIM3
 {

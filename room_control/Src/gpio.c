@@ -22,6 +22,27 @@ void gpio_init_pin(GPIO_TypeDef_t *GPIO, uint8_t pin, uint8_t mode, uint8_t type
     GPIO->PUPDR |= (pupd << (2 * pin));
 }
 
+void gpio_setup_pin(GPIO_TypeDef_t *GPIO, uint8_t pin, uint8_t mode, uint8_t af_num)
+{
+    // Modo AF en MODER
+    GPIO->MODER &= ~(3U << (pin * 2));
+    GPIO->MODER |= ((mode & 3U) << (pin * 2));
+
+    // Configurar AF en AFRL o AFRH
+    if (pin < 8)
+    {
+        GPIO->AFRL &= ~(0xFU << (pin * 4));
+        GPIO->AFRL |= ((af_num & 0xFU) << (pin * 4));
+    }
+
+    else
+    {
+        uint8_t p = pin - 8;
+        GPIO->AFRH &= ~(0xFU << (p * 4));
+        GPIO->AFRH |= ((af_num & 0xFU) << (p * 4));
+    }
+}
+
 void set_gpio(GPIO_TypeDef_t *GPIO, uint8_t pin)
 {
     GPIO->ODR |= (1 << pin); // Encender LED

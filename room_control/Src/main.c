@@ -9,23 +9,25 @@
 volatile uint8_t button_event = 0;
 volatile char uart_event_char = 0;
 
+// Contador de milisegundos del sistema
+volatile uint32_t system_ms_counter = 0;
+
 // Inicializar periféricos del programa
 static void peripherals_init(void)
 {
-    rcc_init(); // Inicia sistema de reloj
+    // Inicialización del sistema
+    rcc_init();
 
-    // Configurar GPIO
-    gpio_init_pin(GPIOA, 5, GPIO_MODE_OUTPUT, GPIO_OTYPE_PP, GPIO_OSPEED_LOW, GPIO_PUPD_NONE);
-    gpio_init_pin(GPIOB, 3, GPIO_MODE_OUTPUT, GPIO_OTYPE_PP, GPIO_OSPEED_LOW, GPIO_PUPD_NONE);
-    gpio_init_pin(GPIOC, 13, GPIO_MODE_INPUT, GPIO_OTYPE_PP, GPIO_OSPEED_LOW, GPIO_PUPD_PU);
+    // Configuración de GPIOs
+    init_gpio(GPIOA, 5, 0x01, 0x00, 0x01, 0x00, 0x00);
+    init_gpio(GPIOC, 13, 0x00, 0x00, 0x01, 0x01, 0x00);
 
-    // Inicialización de periféricos
     init_systick();
     init_gpio_uart();
-    init_uart(); // Asumiendo función unificada
+    init_uart();
     nvic_exti_pc13_button_enable();
     nvic_usart2_irq_enable();
-    tim3_ch1_pwm_init(1000); // 1 kHz PWM
+    tim3_ch1_pwm_set_frequency(100000);
 }
 
 int main(void)
